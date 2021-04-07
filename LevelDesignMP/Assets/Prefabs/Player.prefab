@@ -46,11 +46,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitName: Player
   damage: 5
-  healAmount: 10
+  healAmount: 20
   critModifier: 0
   critAmount: 4
-  maxHP: 30
-  currentHP: 30
+  disarmChance: 0
+  maxHP: 50
+  currentHP: 50
 --- !u!1 &8270805277077956182
 GameObject:
   m_ObjectHideFlags: 0

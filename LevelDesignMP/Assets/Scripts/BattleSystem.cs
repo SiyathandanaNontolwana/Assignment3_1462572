@@ -4,14 +4,24 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public enum GameState { START, PLAYER, ENEMY, WIN, LOSS }
+public enum GameState { START, PLAYER, ENEMY, SECONDENEMY, DISARMED , WIN, LOSS }
 
 public class BattleSystem : MonoBehaviour
 {
 
     public GameState currentState;
 
-    public GameObject playerPrefab, enemyPrefab;
+    public GameObject playerPrefab, enemyPrefab, enemySecondPrefab;
+
+    //ON SCREEN INDICATOR
+    public GameObject playerTurnText, enemyTurnText, enemyDisarmedText;
+    //
+
+    //PLAYER BUTTONS
+    public GameObject playerHealButton;
+    public GameObject playerAttackButton;
+    public GameObject playerSpecialAttackButton;
+    public GameObject playerDisarmButton;
 
     //Screen effects
     private ScreenShake shake;
@@ -20,11 +30,13 @@ public class BattleSystem : MonoBehaviour
     public GameObject playerHealEffect;
     //Screen effects ended
 
-    Unit playerUnit, enemyUnit;
+    Unit playerUnit, enemyUnit, enemySecondUnit;
 
-    public BattleHUD playerHUD, enemyHUD;
+    public BattleHUD playerHUD, enemyHUD, enemySecondHUD;
 
+    //RANDOMIZER VARIABLES
     private bool critHit = false;
+    private bool disArmHit = false;
 
     void Update()
     {
@@ -35,6 +47,31 @@ public class BattleSystem : MonoBehaviour
             Debug.Log("game closed");
             Application.Quit();
         }
+
+        if(currentState == GameState.PLAYER)
+        {
+            disArmHit = false;
+            playerTurnText.SetActive(true);
+            enemyTurnText.SetActive(false);
+            enemyDisarmedText.SetActive(false);
+        }
+        else if (currentState == GameState.ENEMY || currentState == GameState.DISARMED)
+        {
+            playerTurnText.SetActive(false);
+            enemyTurnText.SetActive(true);
+        }
+
+        if (disArmHit == true)
+        {
+            enemyDisarmedText.SetActive(true);
+        }
+        else if (disArmHit != true)
+        {
+            enemyDisarmedText.SetActive(false);
+        }
+
+        playerHealthTracker();
+        enemyHealthTracker();
     }
 
     void Start()
@@ -46,7 +83,7 @@ public class BattleSystem : MonoBehaviour
     }
 
 
-
+    // BATTLE SETUP AT THE START OF THE GAME
     IEnumerator SetUpBattle()
     {
         GameObject playerGameObject = Instantiate(playerPrefab, new Vector3(-6.5f, -2f, 0f), Quaternion.identity);
@@ -55,8 +92,13 @@ public class BattleSystem : MonoBehaviour
         GameObject enemyGameObject = Instantiate(enemyPrefab, new Vector3(6.5f, -2f, 0f), Quaternion.identity);
         enemyUnit = enemyGameObject.GetComponent<Unit>();
 
+        GameObject enemySecondGameObject = Instantiate(enemySecondPrefab, new Vector3(5.5f, -2.42f, 0f), Quaternion.identity);
+        enemySecondUnit = enemySecondGameObject.GetComponent<Unit>();
+
+
         playerHUD.SetHUD(playerUnit);
         enemyHUD.SetHUD(enemyUnit);
+        enemySecondHUD.SetHUD(enemySecondUnit);
 
         yield return new WaitForSeconds(.5f);
 
@@ -64,20 +106,24 @@ public class BattleSystem : MonoBehaviour
         PlayerTurn();
     }
 
+    //PLAYER TURN
     void PlayerTurn()
     {
 
     }
 
+    //DURING PLAYER TURN. ATTACK OPTION THEY HAVE.
     IEnumerator PlayerAttack()
     {
         //Deal damage to enemy
 
         bool isDead = enemyUnit.TakeDamage(playerUnit.damage);
+        bool isSecEnemyDead = enemySecondUnit.TakeDamage(playerUnit.damage - 1);
 
         shake.cameraShake();
 
         enemyHUD.setHP(enemyUnit.currentHP);
+        enemySecondHUD.setHP(enemySecondUnit.currentHP);
         Debug.Log(enemyUnit.currentHP);
         yield return new WaitForSeconds(1f);
 
@@ -88,8 +134,6 @@ public class BattleSystem : MonoBehaviour
             enemyUnit.gameObject.SetActive(false);
             Instantiate(enemyDeathEffect, new Vector3(6.5f, -2f, 0f), Quaternion.identity);
 
-            currentState = GameState.WIN;
-            EndGame();
         }
         else
         {
@@ -97,8 +141,30 @@ public class BattleSystem : MonoBehaviour
             currentState = GameState.ENEMY;
             StartCoroutine(EnemyTurn());
         }
+
+        //check if second enemy is dead
+        if (isSecEnemyDead)
+        {
+            //End battle
+            enemySecondUnit.gameObject.SetActive(false);
+            Instantiate(enemyDeathEffect, new Vector3(5.5f, -2f, 0f), Quaternion.identity);
+        }
+        else
+        {
+            //Enemy turn
+            currentState = GameState.ENEMY;
+            StartCoroutine(EnemyTurn());
+        }
+
+        if(isDead && isSecEnemyDead)
+        {
+
+            currentState = GameState.WIN;
+            EndGame();
+        }
     }
 
+    //SPECIAL ATTACK OPTION
     IEnumerator PlayerSpecialAttack()
     {
         Randomizer(playerUnit.critAmount);
@@ -138,6 +204,7 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
+    //PLAYER OPTION FOR HEAL
     IEnumerator PlayerHeal()
     {
 
@@ -151,21 +218,30 @@ public class BattleSystem : MonoBehaviour
         StartCoroutine(EnemyTurn());
     }
 
-    void EndGame()
+    //PLAYER DISARM OPTION
+    IEnumerator PlayerDisArm()
     {
-        if (currentState == GameState.WIN)
+        DisarmRandomizer(playerUnit.disarmChance);
+
+        if(disArmHit == true)
         {
-            Debug.Log("You Win");
+            currentState = GameState.DISARMED;
+            yield return new WaitForSeconds(1.25f);
+            bool isDead = playerUnit.TakeDamage(0);
+            //shake.cameraShake();
 
+            currentState = GameState.PLAYER;
         }
-        else if (currentState == GameState.LOSS)
+        else if(disArmHit == false)
         {
-            Debug.Log("You Lost");
-
+            currentState = GameState.ENEMY;
+            StartCoroutine(EnemyTurn());
         }
 
+       
     }
 
+    //ENEMY ACTION
     IEnumerator EnemyTurn()
     {
 
@@ -185,12 +261,49 @@ public class BattleSystem : MonoBehaviour
         }
         else
         {
+            //CHECK IF SECOND ENEMY IS ALIVE
+            if (enemySecondUnit.currentHP >= 0f)
+            {
+                currentState = GameState.SECONDENEMY;
+                StartCoroutine(SecondEnemyTurn());
+            }
+            else
+                currentState = GameState.PLAYER;
+
+        }
+
+
+    }
+
+    //SECOND ENEMY ACTION
+
+    IEnumerator SecondEnemyTurn()
+    {
+
+        yield return new WaitForSeconds(1f);
+
+        bool isDead = playerUnit.TakeDamage(enemySecondUnit.damage);
+        shake.cameraShake();
+
+        playerHUD.setHP(playerUnit.currentHP);
+
+        if (isDead)
+        {
+            playerUnit.gameObject.SetActive(false);
+            Instantiate(playerDeathEffect, new Vector3(-6.5f, -2f, 0f), Quaternion.identity);
+            currentState = GameState.LOSS;
+            EndGame();
+        }
+        else
+        {
             currentState = GameState.PLAYER;
             PlayerTurn();
         }
 
 
     }
+
+    //PLAYER BUTTONS
 
     public void AttackButton()
     {
@@ -222,6 +335,18 @@ public class BattleSystem : MonoBehaviour
             StartCoroutine(PlayerSpecialAttack());
     }
 
+    public void DisarmButton()
+    {
+        if (currentState != GameState.PLAYER)
+        {
+            return;
+        }
+        else
+            StartCoroutine(PlayerDisArm());
+    }
+
+    //RANDONMIZER FUNCTIONS
+
     private bool Randomizer(int randomNum)
     {
         randomNum = (int)(Random.Range(1f, 20f));
@@ -233,5 +358,58 @@ public class BattleSystem : MonoBehaviour
         else
             critHit = false;
         return (false);
+    }
+
+    private bool DisarmRandomizer(int disarmChance)
+    {
+        disarmChance = (int)(Random.Range(1f, 20f) + 2);
+        if(disarmChance >= 10f)
+        {
+            //DISARM ENEMY
+            disArmHit = true;
+            return true;
+        }
+        disArmHit = false;
+        return (false);
+    }
+
+    //HEALTH TRACKER FUNCTIONS
+
+    private void enemyHealthTracker()
+    {
+        int currentEnemyHealth = enemyUnit.currentHP + enemySecondUnit.currentHP;
+        int collectiveEnemyMaxHP = enemyUnit.maxHP + enemySecondUnit.maxHP;
+
+        if(currentEnemyHealth <= collectiveEnemyMaxHP - 20)
+        {
+            playerDisarmButton.SetActive(true);
+        }
+    }
+
+    private void playerHealthTracker()
+    {
+        int playerCurrentHealth = playerUnit.currentHP;
+        int playerMaxHealth = playerUnit.maxHP;
+
+        if(playerCurrentHealth <= playerMaxHealth/2)
+        {
+            playerHealButton.SetActive(true);
+        }
+    }
+
+    //WIN OR LOSE CONDITION
+    void EndGame()
+    {
+        if (currentState == GameState.WIN)
+        {
+            Debug.Log("You Win");
+
+        }
+        else if (currentState == GameState.LOSS)
+        {
+            Debug.Log("You Lost");
+
+        }
+
     }
 }

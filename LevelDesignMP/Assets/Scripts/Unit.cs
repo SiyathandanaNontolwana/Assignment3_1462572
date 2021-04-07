@@ -10,6 +10,7 @@ public class Unit : MonoBehaviour
     public int healAmount;
     public int critModifier;
     public int critAmount = 0;
+    public int disarmChance;
 
     public int maxHP;
     public int currentHP;

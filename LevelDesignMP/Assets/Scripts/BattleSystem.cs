@@ -93,7 +93,7 @@ public class BattleSystem : MonoBehaviour
         GameObject enemyGameObject = Instantiate(enemyPrefab, new Vector3(6.5f, -2f, 0f), Quaternion.identity);
         enemyUnit = enemyGameObject.GetComponent<Unit>();
 
-        GameObject enemySecondGameObject = Instantiate(enemySecondPrefab, new Vector3(5.5f, -2.42f, 0f), Quaternion.identity);
+        GameObject enemySecondGameObject = Instantiate(enemySecondPrefab, new Vector3(3f, -2.3f, 0f), Quaternion.identity);
         enemySecondUnit = enemySecondGameObject.GetComponent<Unit>();
 
 
@@ -214,9 +214,13 @@ public class BattleSystem : MonoBehaviour
         Instantiate(playerHealEffect, new Vector3(-6.5f, -1.75f, 0), Quaternion.identity);
         playerHUD.setHP(playerUnit.currentHP);
 
-        enemySecondUnit.Heal(5);
-        Instantiate(enemyHealEffect, new Vector3(3f, -2.5f, 0), Quaternion.identity);
-        enemySecondHUD.setHP(enemySecondUnit.currentHP);
+        if(enemySecondUnit.currentHP >= 0.1f)
+        {
+            enemySecondUnit.Heal(5);
+            Instantiate(enemyHealEffect, new Vector3(3f, -2.5f, 0), Quaternion.identity);
+            enemySecondHUD.setHP(enemySecondUnit.currentHP);
+        }
+
 
         yield return new WaitForSeconds(1f);
         currentState = GameState.ENEMY;

@@ -28,6 +28,7 @@ public class BattleSystem : MonoBehaviour
     public GameObject enemyDeathEffect;
     public GameObject playerDeathEffect;
     public GameObject playerHealEffect;
+    public GameObject enemyHealEffect;
     //Screen effects ended
 
     Unit playerUnit, enemyUnit, enemySecondUnit;
@@ -212,6 +213,10 @@ public class BattleSystem : MonoBehaviour
         playerUnit.Heal(5);
         Instantiate(playerHealEffect, new Vector3(-6.5f, -1.75f, 0), Quaternion.identity);
         playerHUD.setHP(playerUnit.currentHP);
+
+        enemySecondUnit.Heal(5);
+        Instantiate(enemyHealEffect, new Vector3(3f, -2.5f, 0), Quaternion.identity);
+        enemySecondHUD.setHP(enemySecondUnit.currentHP);
 
         yield return new WaitForSeconds(1f);
         currentState = GameState.ENEMY;

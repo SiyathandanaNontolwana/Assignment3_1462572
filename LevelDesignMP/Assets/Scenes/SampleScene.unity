@@ -3635,6 +3635,7 @@ MonoBehaviour:
   enemyDeathEffect: {fileID: 1603291897303210081, guid: 866481703e5dcdf45b6ec276bfc1abfa, type: 3}
   playerDeathEffect: {fileID: 7430589086380608019, guid: 58b589b2dc4dc7143b0458aa4560f5ab, type: 3}
   playerHealEffect: {fileID: 8828791068610238664, guid: 438144a147dfee8409d4e16c43979ae6, type: 3}
+  enemyHealEffect: {fileID: 4027511310772102001, guid: abe93193fc5ae344b892a97b120f528b, type: 3}
   playerHUD: {fileID: 1941730735}
   enemyHUD: {fileID: 815701546}
   enemySecondHUD: {fileID: 1632044447}

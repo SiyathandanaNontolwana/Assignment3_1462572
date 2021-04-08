@@ -214,11 +214,15 @@ public class BattleSystem : MonoBehaviour
         Instantiate(playerHealEffect, new Vector3(-6.5f, -1.75f, 0), Quaternion.identity);
         playerHUD.setHP(playerUnit.currentHP);
 
-        if(enemySecondUnit.currentHP >= 0.1f)
+        if(enemySecondUnit.currentHP >= 0f)
         {
             enemySecondUnit.Heal(5);
             Instantiate(enemyHealEffect, new Vector3(3f, -2.5f, 0), Quaternion.identity);
             enemySecondHUD.setHP(enemySecondUnit.currentHP);
+        }
+        else
+        {
+            enemySecondUnit.Heal(0);
         }
 
 
